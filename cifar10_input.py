@@ -5,9 +5,10 @@ import tarfile
 from six.moves import urllib
 import sys
 import numpy as np
-import cPickle
+import _pickle as cPickle
 import os
 import cv2
+from pdb import set_trace
 
 data_dir = 'cifar10_data'
 full_data_dir = 'cifar10_data/cifar-10-batches-py/data_batch_'
@@ -15,16 +16,16 @@ vali_dir = 'cifar10_data/cifar-10-batches-py/test_batch'
 DATA_URL = 'http://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz'
 
 
-IMG_WIDTH = 32
-IMG_HEIGHT = 32
+IMG_WIDTH = 128
+IMG_HEIGHT = 128
 IMG_DEPTH = 3
-NUM_CLASS = 10
+NUM_CLASS = 5
 
 TRAIN_RANDOM_LABEL = False # Want to use random label for train data?
 VALI_RANDOM_LABEL = False # Want to use random label for validation?
 
-NUM_TRAIN_BATCH = 5 # How many batches of files you want to read in, from 0 to 5)
-EPOCH_SIZE = 10000 * NUM_TRAIN_BATCH
+NUM_TRAIN_BATCH = 1 # How many batches of files you want to read in, from 0 to 5)
+EPOCH_SIZE = 4000 * NUM_TRAIN_BATCH
 
 
 def maybe_download_and_extract():
@@ -49,29 +50,6 @@ def maybe_download_and_extract():
         tarfile.open(filepath, 'r:gz').extractall(dest_directory)
 
 
-def _read_one_batch(path, is_random_label):
-    '''
-    The training data contains five data batches in total. The validation data has only one
-    batch. This function takes the directory of one batch of data and returns the images and
-    corresponding labels as numpy arrays
-
-    :param path: the directory of one batch of data
-    :param is_random_label: do you want to use random labels?
-    :return: image numpy arrays and label numpy arrays
-    '''
-    fo = open(path, 'rb')
-    dicts = cPickle.load(fo)
-    fo.close()
-
-    data = dicts['data']
-    if is_random_label is False:
-        label = np.array(dicts['labels'])
-    else:
-        labels = np.random.randint(low=0, high=10, size=10000)
-        label = np.array(labels)
-    return data, label
-
-
 def read_in_all_images(address_list, shuffle=True, is_random_label = False):
     """
     This function reads all training or validation data, shuffles them if needed, and returns the
@@ -83,24 +61,27 @@ def read_in_all_images(address_list, shuffle=True, is_random_label = False):
     """
     data = np.array([]).reshape([0, IMG_WIDTH * IMG_HEIGHT * IMG_DEPTH])
     label = np.array([])
-
+    """
     for address in address_list:
-        print 'Reading images from ' + address
+        print('Reading images from ' + address)
         batch_data, batch_label = _read_one_batch(address, is_random_label)
         # Concatenate along axis 0 by default
         data = np.concatenate((data, batch_data))
         label = np.concatenate((label, batch_label))
 
-    num_data = len(label)
-
     # This reshape order is really important. Don't change
     # Reshape is correct. Double checked
     data = data.reshape((num_data, IMG_HEIGHT * IMG_WIDTH, IMG_DEPTH), order='F')
     data = data.reshape((num_data, IMG_HEIGHT, IMG_WIDTH, IMG_DEPTH))
-
+    """
+    with open(address_list, 'rb') as handle:
+        dicts_train = cPickle.load(handle,encoding='iso-8859-1')
+    data = dicts_train['data']
+    label = dicts_train['labels']
+    num_data = len(label)
 
     if shuffle is True:
-        print 'Shuffling'
+        print('Shuffling')
         order = np.random.permutation(num_data)
         data = data[order, ...]
         label = label[order]
@@ -168,10 +149,9 @@ def prepare_train_data(padding_size):
     path_list = []
     for i in range(1, NUM_TRAIN_BATCH+1):
         path_list.append(full_data_dir + str(i))
-    data, label = read_in_all_images(path_list, is_random_label=TRAIN_RANDOM_LABEL)
-    
-    pad_width = ((0, 0), (padding_size, padding_size), (padding_size, padding_size), (0, 0))
-    data = np.pad(data, pad_width=pad_width, mode='constant', constant_values=0)
+    data, label = read_in_all_images('dish5/train.pickle', is_random_label=TRAIN_RANDOM_LABEL)
+    #pad_width = ((0, 0), (padding_size, padding_size), (padding_size, padding_size), (0, 0))
+    #data = np.pad(data, pad_width=pad_width, mode='constant', constant_values=0)
     
     return data, label
 
@@ -181,8 +161,9 @@ def read_validation_data():
     Read in validation data. Whitening at the same time
     :return: Validation image data as 4D numpy array. Validation labels as 1D numpy array
     '''
-    validation_array, validation_labels = read_in_all_images([vali_dir],
+    validation_array, validation_labels = read_in_all_images('dish5/val.pickle',
                                                        is_random_label=VALI_RANDOM_LABEL)
+
     validation_array = whitening_image(validation_array)
 
     return validation_array, validation_labels

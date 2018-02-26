@@ -6,6 +6,7 @@ This is the resnet structure
 '''
 import numpy as np
 from hyper_parameters import *
+from pdb import set_trace
 
 
 BN_EPSILON = 0.001
@@ -192,7 +193,8 @@ def inference(input_tensor_batch, n, reuse):
         with tf.variable_scope('conv3_%d' %i, reuse=reuse):
             conv3 = residual_block(layers[-1], 64)
             layers.append(conv3)
-        assert conv3.get_shape().as_list()[1:] == [8, 8, 64]
+            #set_trace()
+        assert conv3.get_shape().as_list()[1:] == [32, 32, 64]
 
     with tf.variable_scope('fc', reuse=reuse):
         in_channel = layers[-1].get_shape().as_list()[-1]

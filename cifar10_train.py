@@ -7,7 +7,7 @@ from datetime import datetime
 import time
 from cifar10_input import *
 import pandas as pd
-
+from pdb import set_trace
 
 
 class Train(object):
@@ -84,7 +84,6 @@ class Train(object):
         # memory
         all_data, all_labels = prepare_train_data(padding_size=FLAGS.padding_size)
         vali_data, vali_labels = read_validation_data()
-
         # Build the graph for train and validation
         self.build_train_validation_graph()
 
@@ -99,7 +98,7 @@ class Train(object):
         # If you want to load from a checkpoint
         if FLAGS.is_use_ckpt is True:
             saver.restore(sess, FLAGS.ckpt_path)
-            print 'Restored from checkpoint...'
+            print('Restored from checkpoint...')
         else:
             sess.run(init)
 
@@ -112,10 +111,10 @@ class Train(object):
         train_error_list = []
         val_error_list = []
 
-        print 'Start training...'
-        print '----------------------------'
+        print('Start training...')
+        print('----------------------------')
 
-        for step in xrange(FLAGS.train_steps):
+        for step in range(FLAGS.train_steps):
 
             train_batch_data, train_batch_labels = self.generate_augment_train_batch(all_data, all_labels,
                                                                         FLAGS.train_batch_size)
@@ -178,12 +177,12 @@ class Train(object):
                 sec_per_batch = float(duration)
 
                 format_str = ('%s: step %d, loss = %.4f (%.1f examples/sec; %.3f ' 'sec/batch)')
-                print format_str % (datetime.now(), step, train_loss_value, examples_per_sec,
-                                    sec_per_batch)
-                print 'Train top1 error = ', train_error_value
-                print 'Validation top1 error = %.4f' % validation_error_value
-                print 'Validation loss = ', validation_loss_value
-                print '----------------------------'
+                print(format_str % (datetime.now(), step, train_loss_value, examples_per_sec,
+                                    sec_per_batch))
+                print('Train top1 error = ', train_error_value)
+                print('Validation top1 error = %.4f' % validation_error_value)
+                print('Validation loss = ', validation_loss_value)
+                print('----------------------------')
 
                 step_list.append(step)
                 train_error_list.append(train_error_value)
@@ -192,7 +191,7 @@ class Train(object):
 
             if step == FLAGS.decay_step0 or step == FLAGS.decay_step1:
                 FLAGS.init_lr = 0.1 * FLAGS.init_lr
-                print 'Learning rate decayed to ', FLAGS.init_lr
+                print('Learning rate decayed to ', FLAGS.init_lr)
 
             # Save checkpoints every 10000 steps
             if step % 10000 == 0 or (step + 1) == FLAGS.train_steps:
@@ -215,7 +214,7 @@ class Train(object):
         num_test_images = len(test_image_array)
         num_batches = num_test_images // FLAGS.test_batch_size
         remain_images = num_test_images % FLAGS.test_batch_size
-        print '%i test batches in total...' %num_batches
+        print('%i test batches in total...' %num_batches)
 
         # Create the test image and labels placeholders
         self.test_image_placeholder = tf.placeholder(dtype=tf.float32, shape=[FLAGS.test_batch_size,
@@ -230,13 +229,13 @@ class Train(object):
         sess = tf.Session()
 
         saver.restore(sess, FLAGS.test_ckpt_path)
-        print 'Model restored from ', FLAGS.test_ckpt_path
+        print('Model restored from ', FLAGS.test_ckpt_path)
 
         prediction_array = np.array([]).reshape(-1, NUM_CLASS)
         # Test by batches
         for step in range(num_batches):
             if step % 10 == 0:
-                print '%i batches finished!' %step
+                print('%i batches finished!' %step)
             offset = step * FLAGS.test_batch_size
             test_image_batch = test_image_array[offset:offset+FLAGS.test_batch_size, ...]
 
@@ -302,7 +301,7 @@ class Train(object):
         :param vali_batch_size: int
         :return: 4D numpy array and 1D numpy array
         '''
-        offset = np.random.choice(10000 - vali_batch_size, 1)[0]
+        offset = np.random.choice(750 - vali_batch_size, 1)[0]
         vali_data_batch = vali_data[offset:offset+vali_batch_size, ...]
         vali_label_batch = vali_label[offset:offset+vali_batch_size]
         return vali_data_batch, vali_label_batch
@@ -417,7 +416,7 @@ class Train(object):
         return np.mean(loss_list), np.mean(error_list)
 
 
-maybe_download_and_extract()
+#maybe_download_and_extract()
 # Initialize the Train object
 train = Train()
 # Start the training session
